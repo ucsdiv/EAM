@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>云盘资源搜索</title>
+    <meta name="description" content="多源聚合云盘资源搜索，支持夸克、百度、阿里、迅雷、115、天翼、移动云盘等十余种网盘">
+    <title>云盘资源搜索 · 多源聚合</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -14,8 +15,12 @@
                 <div class="logo">
                     <span class="logo-icon"></span>
                     <span class="logo-text">云盘搜索</span>
+                    <span class="logo-badge">多源</span>
                 </div>
                 <div class="header-actions">
+                    <button class="header-btn" id="sourceToggle" aria-label="数据源管理" title="数据源管理">
+                        <span class="header-btn-icon source-icon"></span>
+                    </button>
                     <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
                         <span class="theme-icon"></span>
                     </button>
@@ -23,13 +28,24 @@
             </div>
         </header>
 
+        <!-- 数据源面板 -->
+        <aside class="source-panel" id="sourcePanel">
+            <div class="source-panel-header">
+                <h3>数据源管理</h3>
+                <button class="source-close" id="sourceClose" aria-label="关闭">×</button>
+            </div>
+            <p class="source-panel-tip">勾选启用搜索数据源，可同时聚合多个</p>
+            <div class="source-list" id="sourceList"></div>
+        </aside>
+        <div class="source-overlay" id="sourceOverlay"></div>
+
         <!-- 主内容区 -->
         <main class="main-content">
             <!-- 搜索区域 -->
             <section class="search-section" id="searchSection">
                 <div class="search-container">
                     <h1 class="search-title">云盘资源搜索</h1>
-                    <p class="search-subtitle">支持夸克网盘、百度网盘、阿里云盘等多平台资源检索</p>
+                    <p class="search-subtitle">多源聚合 · 支持夸克、百度、阿里、迅雷、115、天翼等十余种网盘</p>
                     
                     <div class="search-box-wrapper">
                         <div class="search-box">
@@ -38,26 +54,36 @@
                                 type="text" 
                                 id="searchInput" 
                                 class="search-input" 
-                                placeholder="输入关键词搜索资源..."
+                                placeholder="输入关键词搜索资源（按 / 快速聚焦）..."
                                 autocomplete="off"
                             >
                             <button class="search-btn" id="searchBtn">
                                 <span class="btn-text">搜索</span>
                             </button>
                         </div>
+                        <!-- 搜索建议 -->
+                        <div class="suggest-box" id="suggestBox" style="display: none;"></div>
                     </div>
 
                     <!-- 筛选标签 -->
                     <div class="filter-tags" id="filterTags">
                         <button class="filter-tag active" data-type="all">全部</button>
-                        <button class="filter-tag" data-type="quark">夸克网盘</button>
-                        <button class="filter-tag" data-type="baidu">百度网盘</button>
-                        <button class="filter-tag" data-type="aliyun">阿里云盘</button>
-                        <button class="filter-tag" data-type="xunlei">迅雷网盘</button>
+                        <button class="filter-tag" data-type="quark">夸克</button>
+                        <button class="filter-tag" data-type="baidu">百度</button>
+                        <button class="filter-tag" data-type="aliyun">阿里</button>
+                        <button class="filter-tag" data-type="xunlei">迅雷</button>
+                        <button class="filter-tag" data-type="115">115</button>
+                        <button class="filter-tag" data-type="tianyi">天翼</button>
+                        <button class="filter-tag" data-type="yidong">移动</button>
+                        <button class="filter-tag" data-type="weiyun">微云</button>
+                        <button class="filter-tag" data-type="123">123</button>
+                        <button class="filter-tag" data-type="magnet">磁力</button>
+                        <button class="filter-tag" data-type="other">其他</button>
                     </div>
 
                     <!-- 排序选项 -->
                     <div class="sort-options">
+                        <span class="sort-label">排序：</span>
                         <button class="sort-btn active" data-sort="latest">最新优先</button>
                         <button class="sort-btn" data-sort="oldest">最早优先</button>
                     </div>
@@ -71,7 +97,15 @@
                             <span class="hot-tag" data-keyword="狂飙">狂飙</span>
                             <span class="hot-tag" data-keyword="Python">Python</span>
                             <span class="hot-tag" data-keyword="考研">考研</span>
+                            <span class="hot-tag" data-keyword="西游记">西游记</span>
+                            <span class="hot-tag" data-keyword="AE教程">AE教程</span>
                         </div>
+                    </div>
+
+                    <!-- 搜索历史 -->
+                    <div class="history-searches" style="display: none;">
+                        <span class="history-label">搜索历史：</span>
+                        <div class="history-tags" id="historyTags"></div>
                     </div>
                 </div>
             </section>
@@ -85,24 +119,25 @@
                     <span class="results-count" id="resultCount">共 0 条结果</span>
                 </div>
 
+                <!-- 统计面板 -->
+                <div class="stats-bar" id="statsBar"></div>
+
                 <!-- 加载状态 -->
                 <div class="loading-state" id="loadingState">
                     <div class="loading-spinner">
                         <div class="spinner-ring"></div>
                     </div>
-                    <p class="loading-text">正在搜索资源...</p>
+                    <p class="loading-text">正在多源聚合搜索资源...</p>
                 </div>
 
                 <!-- 结果列表 -->
-                <div class="results-grid" id="resultsGrid">
-                    <!-- 结果卡片将通过JS动态生成 -->
-                </div>
+                <div class="results-grid" id="resultsGrid"></div>
 
                 <!-- 空状态 -->
                 <div class="empty-state" id="emptyState" style="display: none;">
                     <div class="empty-icon"></div>
                     <p class="empty-text">未找到相关资源</p>
-                    <p class="empty-hint">试试其他关键词吧</p>
+                    <p class="empty-hint">试试其他关键词或启用更多数据源</p>
                 </div>
 
                 <!-- 错误状态 -->
@@ -129,7 +164,8 @@
 
         <!-- 底部 -->
         <footer class="footer">
-            <p>数据来源：泽索搜 Zreso API</p>
+            <p>多源聚合 · 数据来源：泽索搜 Zreso / ClVod / PanSearch 等</p>
+            <p class="footer-hint">提示：部分数据源可能因网络或接口变更不可用，可在右上角"数据源管理"中切换</p>
         </footer>
     </div>
 
